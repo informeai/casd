@@ -1,0 +1,46 @@
+name: Build Go Binaries
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, windows, macos]
+        arch: [amd64, arm64]
+        exclude:
+          - os: windows
+            arch: arm64
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.6'
+
+    - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
+      env:
+        GOOS: ${{ matrix.os }}
+        GOARCH: ${{ matrix.arch }}
+        CGO_ENABLED: 0
+      run: |
+        echo "Compilando para ${GOOS}/${GOARCH}"
+        go build -ldflags="-s -w" -o casd_${GOOS}_${GOARCH} ./cmd/main.go
+    - name: Rename binary for Windows
+      if: matrix.os == 'windows'
+      run: |
+        mv casd_windows_${{ matrix.arch }} casd_windows_${{ matrix.arch }}.exe
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: casd_${{ matrix.os }}_${{ matrix.arch }}
+        path: casd_${{ matrix.os }}_${{ matrix.arch }}
