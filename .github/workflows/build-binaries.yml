@@ -61,24 +61,10 @@ jobs:
         with:
           path: artifacts
           
-      - name: Create Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG_NAME="${{ github.ref_name }}" 
-
-          echo "Generating release notes..."
-          gh release create $TAG_NAME \
-            --title "Release $TAG_NAME" \
-            --generate-notes \
-            --draft
-          
-          # 3B. ANEXA TODOS OS BINÁRIOS
-          # Itera sobre os binários baixados na pasta 'artifacts'
-          echo "Attaching binaries..."
-          for file in artifacts/**/*; do
-            if [ -f "$file" ]; then
-              echo "Attaching $file..."
-              gh release upload $TAG_NAME "$file" --clobber
-            fi
-          done
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
