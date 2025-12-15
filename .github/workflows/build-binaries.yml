@@ -48,7 +48,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: casd_${{ matrix.os }}_${{ matrix.arch }}
-        path: casd_${{ matrix.os }}_${{ matrix.arch }}
+        path: casd_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
   
   release:
     needs: build
