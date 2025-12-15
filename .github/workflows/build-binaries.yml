@@ -1,0 +1,73 @@
+name: Build Go Binaries
+
+on:
+  push:
+    branches: [ main ]
+    tags: 
+      - 'v*.*.*'
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, windows, darwin]
+        arch: [amd64, arm64]
+        exclude:
+          - os: windows
+            arch: arm64
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.6'
+
+    - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
+      env:
+        GOOS: ${{ matrix.os }}
+        GOARCH: ${{ matrix.arch }}
+        CGO_ENABLED: 0
+      run: |
+        echo "Compilando para ${GOOS}/${GOARCH}"
+        go build -ldflags="-s -w" -o casd_${GOOS}_${GOARCH} ./cmd/main.go
+    - name: Rename binary for Windows
+      if: matrix.os == 'windows'
+      run: |
+        mv casd_windows_${{ matrix.arch }} casd_windows_${{ matrix.arch }}.exe
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: casd_${{ matrix.os }}_${{ matrix.arch }}
+        path: casd_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

@@ -61,6 +61,11 @@ func (s *Storage) GetFormula(key string) (*dto.Formula, error) {
 	return s.db.GetFormula(key)
 }
 
+// ListFormulas retrieves all stored formulas.
+func (s *Storage) ListFormulas() (map[string]*dto.Formula, error) {
+	return s.db.ListFormulas()
+}
+
 // FilterFormulas retrieves formulas that match the given criteria.
 func (s *Storage) FilterFormulas(
 	match func(f *dto.Formula) bool,

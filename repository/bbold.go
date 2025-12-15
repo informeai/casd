@@ -115,6 +115,30 @@ func (b *DBBolt) GetFormula(key string) (*dto.Formula, error) {
 	return &f, nil
 }
 
+// ListFormulas retrieves all Formula structs stored in the database.
+func (b *DBBolt) ListFormulas() (map[string]*dto.Formula, error) {
+	results := map[string]*dto.Formula{}
+
+	err := b.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("formulas"))
+		if b == nil {
+			return fmt.Errorf("bucket formulas não encontrado")
+		}
+
+		return b.ForEach(func(k, v []byte) error {
+			var f dto.Formula
+			if err := json.Unmarshal(v, &f); err != nil {
+				return err
+			}
+			results[string(k)] = &f
+
+			return nil
+		})
+	})
+
+	return results, err
+}
+
 // FilterFormulas retrieves all Formula structs that match the provided filter function.
 func (b *DBBolt) FilterFormulas(
 	match func(f *dto.Formula) bool,
