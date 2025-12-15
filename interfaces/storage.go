@@ -9,6 +9,7 @@ type Storage interface {
 	DeleteChunk(hash string) error
 	SaveFormula(key string, f *dto.Formula) error
 	GetFormula(key string) (*dto.Formula, error)
+	ListFormulas() (map[string]*dto.Formula, error)
 	FilterFormulas(
 		match func(f *dto.Formula) bool,
 	) (map[string]*dto.Formula, error)
